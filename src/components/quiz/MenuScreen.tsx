@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, User, Zap, Target, Award } from "lucide-react";
+import { Trophy, Users, User, Zap, Target, Award, BookOpen } from "lucide-react";
+import { TOTAL_QUESTIONS } from "@/data/questions";
 
 interface MenuScreenProps {
   onStartSolo: () => void;
@@ -33,11 +34,14 @@ export function MenuScreen({ onStartSolo, onStartMultiplayer, onShowRanking, onS
           Teste seu conhecimento das Escrituras
         </p>
         <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground flex-wrap">
+          <BookOpen className="w-4 h-4 text-secondary" />
+          <span className="font-semibold text-foreground">{TOTAL_QUESTIONS} Perguntas Únicas</span>
+          <span>•</span>
           <Zap className="w-4 h-4 text-secondary" />
           <span>Quiz Competitivo</span>
           <span>•</span>
           <Trophy className="w-4 h-4 text-primary" />
-          <span>Ranking Global</span>
+          <span>Ranking</span>
           <span>•</span>
           <Award className="w-4 h-4 text-success" />
           <span>Conquistas</span>
