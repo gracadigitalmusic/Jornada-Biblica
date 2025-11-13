@@ -5,9 +5,14 @@ import { QuizScreen } from "@/components/quiz/QuizScreen";
 import { ResultsScreen } from "@/components/quiz/ResultsScreen";
 import { RankingModal } from "@/components/quiz/RankingModal";
 import { AchievementsModal } from "@/components/quiz/AchievementsModal";
+import { PowerUpShop } from "@/components/quiz/PowerUpShop";
+import { MarathonMode } from "@/components/quiz/MarathonMode";
+import { StudyMode } from "@/components/quiz/StudyMode";
+import { TournamentMode } from "@/components/quiz/TournamentMode";
 import { useQuizGame } from "@/hooks/useQuizGame";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useRanking } from "@/hooks/useRanking";
+import { usePlayerLevel } from "@/hooks/usePlayerLevel";
 import { Player, GameMode } from "@/types/quiz";
 
 const Index = () => {
@@ -16,12 +21,14 @@ const Index = () => {
   const [showPlayerSetup, setShowPlayerSetup] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showPowerUpShop, setShowPowerUpShop] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isGameOverState, setIsGameOverState] = useState(false);
 
   const quiz = useQuizGame();
   const achievements = useAchievements();
   const ranking = useRanking();
+  const playerLevel = usePlayerLevel();
 
   // Check for timeout
   useEffect(() => {
@@ -38,6 +45,30 @@ const Index = () => {
   const handleStartMultiplayer = () => {
     setSetupMode('multiplayer');
     setShowPlayerSetup(true);
+  };
+
+  const handleStartMarathon = () => {
+    setGameMode('marathon');
+  };
+
+  const handleStartStudy = () => {
+    setGameMode('study');
+  };
+
+  const handleStartTournament = () => {
+    setGameMode('tournament');
+  };
+
+  const handleMarathonReady = (player: Player) => {
+    quiz.initializeGame([player], 999); // Large number for marathon
+    setGameMode("quiz");
+    achievements.unlock('start');
+  };
+
+  const handleTournamentStart = () => {
+    setSetupMode('solo');
+    setShowPlayerSetup(true);
+    // Tournament uses 10 fixed questions
   };
 
   const handlePlayersReady = (players: Player[]) => {
@@ -95,6 +126,8 @@ const Index = () => {
       // Save to ranking if solo
       if (setupMode === 'solo' && quiz.currentPlayer && quiz.currentPlayer.score > 0) {
         ranking.addScore(quiz.currentPlayer);
+        // Add score to player level progression
+        playerLevel.addScore(quiz.currentPlayer.score);
       }
     }
 
@@ -132,11 +165,33 @@ const Index = () => {
           <MenuScreen
             onStartSolo={handleStartSolo}
             onStartMultiplayer={handleStartMultiplayer}
+            onStartMarathon={handleStartMarathon}
+            onStartStudy={handleStartStudy}
+            onStartTournament={handleStartTournament}
             onShowRanking={() => {
               ranking.loadRanking();
               setShowRanking(true);
             }}
             onShowAchievements={() => setShowAchievements(true)}
+            onShowPowerUpShop={() => setShowPowerUpShop(true)}
+          />
+        )}
+
+        {gameMode === "marathon" && (
+          <MarathonMode
+            onStart={handleMarathonReady}
+            onBack={() => setGameMode("menu")}
+          />
+        )}
+
+        {gameMode === "study" && (
+          <StudyMode onBack={() => setGameMode("menu")} />
+        )}
+
+        {gameMode === "tournament" && (
+          <TournamentMode
+            onStart={handleTournamentStart}
+            onBack={() => setGameMode("menu")}
           />
         )}
 
@@ -187,6 +242,11 @@ const Index = () => {
         open={showAchievements}
         onClose={() => setShowAchievements(false)}
         achievements={achievements.getAchievements()}
+      />
+
+      <PowerUpShop
+        open={showPowerUpShop}
+        onClose={() => setShowPowerUpShop(false)}
       />
     </div>
   );

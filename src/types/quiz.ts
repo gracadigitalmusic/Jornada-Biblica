@@ -43,4 +43,37 @@ export interface RankingEntry {
   avatar: string;
 }
 
-export type GameMode = 'menu' | 'solo' | 'multiplayer' | 'quiz' | 'results';
+export type GameMode = 'menu' | 'solo' | 'multiplayer' | 'marathon' | 'study' | 'tournament' | 'quiz' | 'results';
+
+export interface PowerUp {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  cost: number;
+  effect: 'divine_protection' | 'revelation' | 'extra_time' | 'double_points';
+}
+
+export interface PlayerLevel {
+  level: number;
+  title: string;
+  minScore: number;
+  benefits: string[];
+  extraLives: number;
+  extraHints: number;
+}
+
+export interface Tournament {
+  id: string;
+  weekStart: string;
+  weekEnd: string;
+  participants: TournamentEntry[];
+}
+
+export interface TournamentEntry {
+  name: string;
+  avatar: string;
+  score: number;
+  questionsAnswered: number;
+  date: string;
+}
