@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Achievement, AchievementData } from '@/types/quiz';
 import { toast } from '@/hooks/use-toast';
+import { useGameSounds } from './useGameSounds';
 
 const ACHIEVEMENT_DEFINITIONS: Record<string, { title: string; desc: string }> = {
   'start': { title: "Iniciante", desc: "Começou o seu primeiro jogo." },
@@ -22,6 +23,7 @@ const ACHIEVEMENT_DEFINITIONS: Record<string, { title: string; desc: string }> =
 };
 
 export function useAchievements() {
+  const { playAchievement } = useGameSounds();
   const [data, setData] = useState<AchievementData>({
     totalAnswers: 0,
     totalCorrect: 0,
@@ -69,12 +71,13 @@ export function useAchievements() {
     };
     save(newData);
 
+    playAchievement();
     toast({
       title: "🏆 Conquista Desbloqueada!",
       description: ACHIEVEMENT_DEFINITIONS[id].title,
       duration: 4000,
     });
-  }, [data, save]);
+  }, [data, save, playAchievement]);
 
   const logAnswer = useCallback((
     correct: boolean,

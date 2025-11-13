@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Heart, Lightbulb, Zap } from "lucide-react";
 import { Question, Player } from "@/types/quiz";
 import { GAME_CONSTANTS } from "@/data/questions";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface QuizScreenProps {
   question: Question;
@@ -37,6 +38,7 @@ export function QuizScreen({
   onQuit,
   gameMode,
 }: QuizScreenProps) {
+  const { playCorrect, playWrong, playTimerWarning } = useGameSounds();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [disabledIndices, setDisabledIndices] = useState<number[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -54,11 +56,15 @@ export function QuizScreen({
   }, [questionIndex]);
 
   useEffect(() => {
+    // Play warning sound when time is running out
+    if (timeRemaining <= 5 && timeRemaining > 4.9 && !showFeedback) {
+      playTimerWarning();
+    }
     // Auto-trigger timeout
     if (timeRemaining <= 0 && selectedIndex === null) {
       handleTimeout();
     }
-  }, [timeRemaining]);
+  }, [timeRemaining, showFeedback, playTimerWarning]);
 
   const handleHint = () => {
     const indicesToDisable = onUseHint();
@@ -68,6 +74,7 @@ export function QuizScreen({
   };
 
   const handleTimeout = () => {
+    playWrong();
     setFeedbackType('wrong');
     setShowFeedback(true);
     setTimeout(() => {
@@ -82,6 +89,12 @@ export function QuizScreen({
     const correct = index === question.answer;
     setFeedbackType(correct ? 'correct' : 'wrong');
     setShowFeedback(true);
+
+    if (correct) {
+      playCorrect();
+    } else {
+      playWrong();
+    }
 
     setTimeout(() => {
       onAnswer(index);
