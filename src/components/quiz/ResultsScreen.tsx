@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Trophy, Award, Medal, Star, Share2 } from "lucide-react";
 import { Player } from "@/types/quiz";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface ResultsScreenProps {
   players: Player[];
@@ -18,8 +20,13 @@ export function ResultsScreen({
   onContinue,
   onEndGame,
 }: ResultsScreenProps) {
+  const { playVictory } = useGameSounds();
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
   const winner = sortedPlayers[0];
+
+  useEffect(() => {
+    playVictory();
+  }, [playVictory]);
 
   const handleShare = () => {
     const gameUrl = window.location.href;
