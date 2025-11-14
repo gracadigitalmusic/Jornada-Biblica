@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Users, User, Zap, Target, Award, BookOpen, Flame, GraduationCap, Medal } from "lucide-react";
 import { TOTAL_QUESTIONS } from "@/data/questions";
 import { PlayerLevelCard } from "./PlayerLevelCard";
+import { BadgesDisplay } from "./BadgesDisplay";
 
 interface MenuScreenProps {
   onStartSolo: () => void;
@@ -23,9 +24,10 @@ export function MenuScreen({ onStartSolo, onStartMultiplayer, onStartMarathon, o
       transition={{ duration: 0.5 }}
       className="text-center space-y-6"
     >
-      {/* Player Level Card */}
-      <div className="mb-6">
+      {/* Player Level and Badges */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-3 items-start justify-center">
         <PlayerLevelCard />
+        <BadgesDisplay />
       </div>
 
       {/* Logo/Title */}

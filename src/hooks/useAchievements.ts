@@ -62,7 +62,7 @@ export function useAchievements() {
     }
   }, []);
 
-  const unlock = useCallback((id: string) => {
+  const unlock = useCallback((id: string, onCelebrate?: () => void) => {
     if (!ACHIEVEMENT_DEFINITIONS[id] || data.unlocked.has(id)) return;
     
     const newData = {
@@ -72,6 +72,7 @@ export function useAchievements() {
     save(newData);
 
     playAchievement();
+    onCelebrate?.();
     toast({
       title: "🏆 Conquista Desbloqueada!",
       description: ACHIEVEMENT_DEFINITIONS[id].title,
@@ -83,7 +84,8 @@ export function useAchievements() {
     correct: boolean,
     timeRemaining: number,
     combo: number,
-    hintUsed: boolean = false
+    hintUsed: boolean = false,
+    onCelebrate?: () => void
   ) => {
     const newData = { ...data };
     newData.totalAnswers++;
@@ -94,15 +96,15 @@ export function useAchievements() {
       if (combo > newData.maxCombo) newData.maxCombo = combo;
 
       // Check achievements
-      if (newData.totalCorrect === 10) unlock('correct_10');
-      if (newData.totalCorrect === 50) unlock('correct_50');
-      if (newData.totalCorrect === 100) unlock('correct_100');
-      if (newData.totalCorrect === 250) unlock('correct_250');
-      if (newData.totalCorrect === 500) unlock('correct_500');
-      if (combo === 3) unlock('combo_3');
-      if (combo === 5) unlock('combo_5');
-      if (combo === 10) unlock('combo_10');
-      if (timeRemaining <= 2.0 && !hintUsed) unlock('clutch');
+      if (newData.totalCorrect === 10) unlock('correct_10', onCelebrate);
+      if (newData.totalCorrect === 50) unlock('correct_50', onCelebrate);
+      if (newData.totalCorrect === 100) unlock('correct_100', onCelebrate);
+      if (newData.totalCorrect === 250) unlock('correct_250', onCelebrate);
+      if (newData.totalCorrect === 500) unlock('correct_500', onCelebrate);
+      if (combo === 3) unlock('combo_3', onCelebrate);
+      if (combo === 5) unlock('combo_5', onCelebrate);
+      if (combo === 10) unlock('combo_10', onCelebrate);
+      if (timeRemaining <= 2.0 && !hintUsed) unlock('clutch', onCelebrate);
     } else {
       if (timeRemaining <= 0) {
         if (newData.totalTimeouts === 0) unlock('first_timeout');
@@ -120,15 +122,16 @@ export function useAchievements() {
     sessionWrongAnswers: number,
     hintUsedThisSession: boolean,
     livesLeft: number,
-    maxLives: number
+    maxLives: number,
+    onCelebrate?: () => void
   ) => {
     const newData = { ...data };
     newData.totalSessions++;
 
-    if (sessionWrongAnswers === 0) unlock('perfect_session');
-    if (!hintUsedThisSession) unlock('no_hint');
-    if (livesLeft === maxLives) unlock('all_lives');
-    if (newData.totalSessions === 10) unlock('session_10');
+    if (sessionWrongAnswers === 0) unlock('perfect_session', onCelebrate);
+    if (!hintUsedThisSession) unlock('no_hint', onCelebrate);
+    if (livesLeft === maxLives) unlock('all_lives', onCelebrate);
+    if (newData.totalSessions === 10) unlock('session_10', onCelebrate);
 
     save(newData);
   }, [data, save, unlock]);
