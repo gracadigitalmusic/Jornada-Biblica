@@ -25,6 +25,7 @@ const Index = () => {
   const [showPowerUpShop, setShowPowerUpShop] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isGameOverState, setIsGameOverState] = useState(false);
+  const [showNextButton, setShowNextButton] = useState(false);
 
   const quiz = useQuizGame();
   const achievements = useAchievements();
@@ -81,6 +82,7 @@ const Index = () => {
     achievements.unlock('start');
     setShowResults(false);
     setIsGameOverState(false);
+    setShowNextButton(false);
   };
 
   const handleAnswer = (selectedIndex: number) => {
@@ -96,17 +98,19 @@ const Index = () => {
       () => celebration.celebrateAchievement()
     );
 
-    // Check if game should end
-    setTimeout(() => {
-      if (quiz.isGameOver()) {
-        handleGameEnd();
-      } else {
-        quiz.nextQuestion();
-        setShowResults(false);
-      }
-    }, 2000);
-
     setShowResults(true);
+    setShowNextButton(true);
+  };
+
+  const handleNextQuestion = () => {
+    setShowNextButton(false);
+    
+    if (quiz.isGameOver()) {
+      handleGameEnd();
+    } else {
+      quiz.nextQuestion();
+      setShowResults(false);
+    }
   };
 
   const handleTimeout = () => {
@@ -212,7 +216,7 @@ const Index = () => {
           />
         )}
 
-        {gameMode === "quiz" && quiz.currentQuestion && !showResults && (
+        {gameMode === "quiz" && quiz.currentQuestion && (
           <QuizScreen
             question={quiz.currentQuestion}
             questionIndex={quiz.currentQuestionIndex}
@@ -224,9 +228,11 @@ const Index = () => {
             combo={quiz.combo}
             timeRemaining={quiz.timeRemaining}
             onAnswer={handleAnswer}
+            onNextQuestion={handleNextQuestion}
             onUseHint={quiz.useHint}
             onQuit={handleQuitQuiz}
             gameMode={setupMode}
+            showNextButton={showNextButton}
           />
         )}
 
