@@ -18,9 +18,11 @@ interface QuizScreenProps {
   combo: number;
   timeRemaining: number;
   onAnswer: (index: number) => void;
+  onNextQuestion: () => void;
   onUseHint: () => number[] | null;
   onQuit: () => void;
   gameMode: 'solo' | 'multiplayer';
+  showNextButton: boolean;
 }
 
 export function QuizScreen({
@@ -34,9 +36,11 @@ export function QuizScreen({
   combo,
   timeRemaining,
   onAnswer,
+  onNextQuestion,
   onUseHint,
   onQuit,
   gameMode,
+  showNextButton,
 }: QuizScreenProps) {
   const { playCorrect, playWrong, playTimerWarning } = useGameSounds();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -77,9 +81,7 @@ export function QuizScreen({
     playWrong();
     setFeedbackType('wrong');
     setShowFeedback(true);
-    setTimeout(() => {
-      onAnswer(-1); // -1 indicates timeout
-    }, 1500);
+    onAnswer(-1); // -1 indicates timeout
   };
 
   const handleSelectOption = (index: number) => {
@@ -96,9 +98,7 @@ export function QuizScreen({
       playWrong();
     }
 
-    setTimeout(() => {
-      onAnswer(index);
-    }, 1500);
+    onAnswer(index);
   };
 
   return (
@@ -258,18 +258,44 @@ export function QuizScreen({
           </AnimatePresence>
         </div>
 
-        {/* Reference */}
+        {/* Reference and Explanation */}
         {showFeedback && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="mt-4 p-4 bg-muted/10 rounded-lg text-sm text-muted-foreground"
+            className="mt-6 space-y-3"
           >
-            <p className="font-semibold">{question.reference}</p>
-            {question.explanation && <p className="mt-1">{question.explanation}</p>}
+            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <p className="text-xs font-semibold text-primary/70 mb-1">📖 Referência Bíblica</p>
+              <p className="font-bold text-foreground">{question.reference}</p>
+            </div>
+            
+            {question.explanation && (
+              <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">💡 Explicação</p>
+                <p className="text-sm text-foreground leading-relaxed">{question.explanation}</p>
+              </div>
+            )}
           </motion.div>
         )}
       </motion.div>
+
+      {/* Next Question Button */}
+      {showNextButton && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <Button 
+            size="lg" 
+            onClick={onNextQuestion}
+            className="font-bold text-lg px-8"
+          >
+            Próxima Pergunta →
+          </Button>
+        </motion.div>
+      )}
 
       {/* Quit Button */}
       <div className="text-center">
