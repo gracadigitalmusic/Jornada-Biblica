@@ -60,6 +60,7 @@ export function useQuizGame() {
     setSessionHintUsed(false);
     setHintUsedOnQuestion(false);
     setIsTimerRunning(true);
+    return selected[0]?.question; // Retorna o texto da primeira pergunta
   }, []);
 
   const useHint = useCallback(() => {
@@ -88,7 +89,7 @@ export function useQuizGame() {
     setIsTimerRunning(false);
     
     const currentQuestion = questions[currentQuestionIndex];
-    if (!currentQuestion) return { correct: false, pointsEarned: 0 };
+    if (!currentQuestion) return { correct: false, pointsEarned: 0, timeRemaining: 0 };
 
     const correct = selectedIndex === currentQuestion.answer;
     let pointsEarned = 0;
@@ -140,15 +141,18 @@ export function useQuizGame() {
     const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
     setCurrentPlayerIndex(nextPlayerIndex);
     
+    let nextQuestionIndex = currentQuestionIndex;
     if (nextPlayerIndex === 0) {
       // Completed round, move to next question
-      setCurrentQuestionIndex(prev => prev + 1);
+      nextQuestionIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextQuestionIndex);
     }
     
     setTimeRemaining(GAME_CONSTANTS.TIME_PER_QUESTION);
     setHintUsedOnQuestion(false);
     setIsTimerRunning(true);
-  }, [currentPlayerIndex, players.length]);
+    return questions[nextQuestionIndex]?.question; // Retorna o texto da próxima pergunta
+  }, [currentPlayerIndex, players.length, currentQuestionIndex, questions]);
 
   const isGameOver = useCallback(() => {
     return (players.length === 1 && lives <= 0) || currentQuestionIndex >= questions.length;

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, User, Zap, Target, Award, BookOpen, Flame, GraduationCap, Medal } from "lucide-react";
+import { Trophy, Users, User, Zap, Target, Award, BookOpen, Flame, GraduationCap, Medal, BookMarked, Volume2, VolumeX } from "lucide-react";
 import { TOTAL_QUESTIONS } from "@/data/questions";
 import { PlayerLevelCard } from "./PlayerLevelCard";
 import { BadgesDisplay } from "./BadgesDisplay";
@@ -14,16 +14,40 @@ interface MenuScreenProps {
   onShowRanking: () => void;
   onShowAchievements: () => void;
   onShowPowerUpShop: () => void;
+  onShowReview: () => void;
+  isReviewAvailable: boolean;
+  isNarrationEnabled: boolean;
+  onToggleNarration: () => void;
 }
 
-export function MenuScreen({ onStartSolo, onStartMultiplayer, onStartMarathon, onStartStudy, onStartTournament, onShowRanking, onShowAchievements, onShowPowerUpShop }: MenuScreenProps) {
+export function MenuScreen({ 
+  onStartSolo, 
+  onStartMultiplayer, 
+  onStartMarathon, 
+  onStartStudy, 
+  onStartTournament, 
+  onShowRanking, 
+  onShowAchievements, 
+  onShowPowerUpShop,
+  onShowReview,
+  isReviewAvailable,
+  isNarrationEnabled,
+  onToggleNarration
+}: MenuScreenProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="text-center space-y-6"
+      className="text-center space-y-6 relative"
     >
+      {/* Narration Toggle */}
+      <div className="absolute -top-2 right-0 sm:right-4">
+        <Button variant="ghost" size="icon" onClick={onToggleNarration} title={isNarrationEnabled ? "Desativar Narração" : "Ativar Narração"}>
+          {isNarrationEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
+        </Button>
+      </div>
+
       {/* Player Level and Badges */}
       <div className="mb-6 flex flex-col sm:flex-row gap-3 items-start justify-center">
         <PlayerLevelCard />
@@ -222,6 +246,10 @@ export function MenuScreen({ onStartSolo, onStartMultiplayer, onStartMarathon, o
         <Button variant="outline" size="lg" className="gap-2" onClick={onShowPowerUpShop}>
           <Zap className="w-5 h-5" />
           Power-Ups
+        </Button>
+        <Button variant="outline" size="lg" className="gap-2" onClick={onShowReview} disabled={!isReviewAvailable}>
+          <BookMarked className="w-5 h-5" />
+          Revisão
         </Button>
       </motion.div>
 

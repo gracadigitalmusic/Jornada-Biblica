@@ -43,7 +43,7 @@ export interface RankingEntry {
   avatar: string;
 }
 
-export type GameMode = 'menu' | 'solo' | 'multiplayer' | 'marathon' | 'study' | 'tournament' | 'quiz' | 'results';
+export type GameMode = 'menu' | 'solo' | 'multiplayer' | 'marathon' | 'study' | 'tournament' | 'quiz' | 'results' | 'review';
 
 export interface PowerUp {
   id: string;

@@ -9,11 +9,15 @@ import { PowerUpShop } from "@/components/quiz/PowerUpShop";
 import { MarathonMode } from "@/components/quiz/MarathonMode";
 import { StudyMode } from "@/components/quiz/StudyMode";
 import { TournamentMode } from "@/components/quiz/TournamentMode";
+import { ReviewMode } from "@/components/quiz/ReviewMode";
 import { useQuizGame } from "@/hooks/useQuizGame";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useRanking } from "@/hooks/useRanking";
 import { usePlayerLevel } from "@/hooks/usePlayerLevel";
 import { useCelebration } from "@/hooks/useCelebration";
+import { useReviewHistory } from "@/hooks/useReviewHistory";
+import { useGameSettings } from "@/hooks/useGameSettings";
+import { useNarration } from "@/hooks/useNarration";
 import { Player, GameMode } from "@/types/quiz";
 
 const Index = () => {
@@ -32,6 +36,9 @@ const Index = () => {
   const ranking = useRanking();
   const playerLevel = usePlayerLevel();
   const celebration = useCelebration();
+  const reviewHistory = useReviewHistory();
+  const { settings, toggleNarration } = useGameSettings();
+  const { speak, cancel } = useNarration();
 
   // Check for timeout
   useEffect(() => {
@@ -39,6 +46,13 @@ const Index = () => {
       handleTimeout();
     }
   }, [quiz.timeRemaining, gameMode, showResults]);
+
+  // Stop narration when leaving quiz
+  useEffect(() => {
+    return () => {
+      cancel();
+    };
+  }, [cancel]);
 
   const handleStartSolo = () => {
     setSetupMode('solo');
@@ -61,11 +75,18 @@ const Index = () => {
   const handleStartTournament = () => {
     setGameMode('tournament');
   };
+  
+  const handleStartReview = () => {
+    setGameMode('review');
+  };
 
   const handleMarathonReady = (player: Player) => {
-    quiz.initializeGame([player], 999); // Large number for marathon
+    const firstQuestionText = quiz.initializeGame([player], 999); // Large number for marathon
     setGameMode("quiz");
     achievements.unlock('start');
+    if (settings.isNarrationEnabled && firstQuestionText) {
+      setTimeout(() => speak(firstQuestionText), 500);
+    }
   };
 
   const handleTournamentStart = () => {
@@ -77,18 +98,26 @@ const Index = () => {
   const handlePlayersReady = (players: Player[]) => {
     setShowPlayerSetup(false);
     const numQuestions = setupMode === 'solo' ? 10 : 20 + (players.length - 2) * 5;
-    quiz.initializeGame(players, numQuestions);
+    const firstQuestionText = quiz.initializeGame(players, numQuestions);
     setGameMode("quiz");
     achievements.unlock('start');
     setShowResults(false);
     setIsGameOverState(false);
     setShowNextButton(false);
+    if (settings.isNarrationEnabled && firstQuestionText) {
+      setTimeout(() => speak(firstQuestionText), 500);
+    }
   };
 
   const handleAnswer = (selectedIndex: number) => {
+    cancel(); // Para a narração da pergunta
     const result = selectedIndex === -1 
       ? quiz.handleTimeout() 
       : quiz.answerQuestion(selectedIndex);
+    
+    if (!result.correct && quiz.currentQuestion) {
+      reviewHistory.addIncorrectQuestion(quiz.currentQuestion.id);
+    }
     
     achievements.logAnswer(
       result.correct,
@@ -100,16 +129,25 @@ const Index = () => {
 
     setShowResults(true);
     setShowNextButton(true);
+
+    if (settings.isNarrationEnabled && quiz.currentQuestion?.explanation) {
+      const answerText = `A resposta correta é: ${quiz.currentQuestion.options[quiz.currentQuestion.answer]}. ${quiz.currentQuestion.explanation}`;
+      setTimeout(() => speak(answerText), 700);
+    }
   };
 
   const handleNextQuestion = () => {
+    cancel();
     setShowNextButton(false);
     
     if (quiz.isGameOver()) {
       handleGameEnd();
     } else {
-      quiz.nextQuestion();
+      const nextQuestionText = quiz.nextQuestion();
       setShowResults(false);
+      if (settings.isNarrationEnabled && nextQuestionText) {
+        setTimeout(() => speak(nextQuestionText), 500);
+      }
     }
   };
 
@@ -123,10 +161,6 @@ const Index = () => {
     
     // Log session for achievements
     if (!isGameOver) {
-      const isPerfect = quiz.sessionWrongAnswers === 0;
-      const noHints = !quiz.sessionHintUsed;
-      const fullLives = quiz.lives === 3;
-      
       achievements.logSession(
         quiz.sessionWrongAnswers,
         quiz.sessionHintUsed,
@@ -139,14 +173,12 @@ const Index = () => {
       if (setupMode === 'solo' && quiz.currentPlayer && quiz.currentPlayer.score > 0) {
         ranking.addScore(quiz.currentPlayer);
         
-        // Add score to player level progression and check for level up
         const leveledUp = playerLevel.addScore(quiz.currentPlayer.score);
         if (leveledUp) {
           setTimeout(() => celebration.celebrateLevelUp(), 500);
         }
         
-        // Victory celebration for perfect games
-        if (isPerfect) {
+        if (quiz.sessionWrongAnswers === 0) {
           setTimeout(() => celebration.celebrateVictory(), 1000);
         }
       }
@@ -168,6 +200,7 @@ const Index = () => {
 
   const handleQuitQuiz = () => {
     if (confirm("Tem certeza que deseja sair? Seu progresso será perdido.")) {
+      cancel();
       handleEndGame();
     }
   };
@@ -195,6 +228,10 @@ const Index = () => {
             }}
             onShowAchievements={() => setShowAchievements(true)}
             onShowPowerUpShop={() => setShowPowerUpShop(true)}
+            onShowReview={handleStartReview}
+            isReviewAvailable={reviewHistory.hasIncorrectQuestions()}
+            isNarrationEnabled={settings.isNarrationEnabled}
+            onToggleNarration={toggleNarration}
           />
         )}
 
@@ -214,6 +251,10 @@ const Index = () => {
             onStart={handleTournamentStart}
             onBack={() => setGameMode("menu")}
           />
+        )}
+
+        {gameMode === "review" && (
+          <ReviewMode onBack={() => setGameMode("menu")} />
         )}
 
         {gameMode === "quiz" && quiz.currentQuestion && (
