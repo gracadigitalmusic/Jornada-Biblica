@@ -13,6 +13,7 @@ import { useQuizGame } from "@/hooks/useQuizGame";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useRanking } from "@/hooks/useRanking";
 import { usePlayerLevel } from "@/hooks/usePlayerLevel";
+import { useCelebration } from "@/hooks/useCelebration";
 import { Player, GameMode } from "@/types/quiz";
 
 const Index = () => {
@@ -29,6 +30,7 @@ const Index = () => {
   const achievements = useAchievements();
   const ranking = useRanking();
   const playerLevel = usePlayerLevel();
+  const celebration = useCelebration();
 
   // Check for timeout
   useEffect(() => {
@@ -90,7 +92,8 @@ const Index = () => {
       result.correct,
       result.timeRemaining,
       quiz.combo,
-      quiz.hintUsedOnQuestion
+      quiz.hintUsedOnQuestion,
+      () => celebration.celebrateAchievement()
     );
 
     // Check if game should end
@@ -116,18 +119,32 @@ const Index = () => {
     
     // Log session for achievements
     if (!isGameOver) {
+      const isPerfect = quiz.sessionWrongAnswers === 0;
+      const noHints = !quiz.sessionHintUsed;
+      const fullLives = quiz.lives === 3;
+      
       achievements.logSession(
         quiz.sessionWrongAnswers,
         quiz.sessionHintUsed,
         quiz.lives,
-        3
+        3,
+        () => celebration.celebrateAchievement()
       );
 
       // Save to ranking if solo
       if (setupMode === 'solo' && quiz.currentPlayer && quiz.currentPlayer.score > 0) {
         ranking.addScore(quiz.currentPlayer);
-        // Add score to player level progression
-        playerLevel.addScore(quiz.currentPlayer.score);
+        
+        // Add score to player level progression and check for level up
+        const leveledUp = playerLevel.addScore(quiz.currentPlayer.score);
+        if (leveledUp) {
+          setTimeout(() => celebration.celebrateLevelUp(), 500);
+        }
+        
+        // Victory celebration for perfect games
+        if (isPerfect) {
+          setTimeout(() => celebration.celebrateVictory(), 1000);
+        }
       }
     }
 

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, Sparkles, Check } from 'lucide-react';
 import { usePowerUps } from '@/hooks/usePowerUps';
+import { useCelebration } from '@/hooks/useCelebration';
 import { usePlayerLevel } from '@/hooks/usePlayerLevel';
 import { toast } from '@/hooks/use-toast';
 
@@ -16,6 +17,7 @@ interface PowerUpShopProps {
 export function PowerUpShop({ open, onClose }: PowerUpShopProps) {
   const powerUps = usePowerUps();
   const playerLevel = usePlayerLevel();
+  const celebration = useCelebration();
 
   const handlePurchase = (powerUpId: string, cost: number) => {
     if (playerLevel.totalScore < cost) {
@@ -31,6 +33,7 @@ export function PowerUpShop({ open, onClose }: PowerUpShopProps) {
     if (success) {
       // Deduz os pontos do total
       playerLevel.addScore(-cost);
+      celebration.celebratePowerUp();
       toast({
         title: "✨ Power-Up Comprado!",
         description: "Use-o durante uma partida para vantagens especiais.",

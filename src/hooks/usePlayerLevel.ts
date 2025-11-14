@@ -33,10 +33,18 @@ export function usePlayerLevel() {
 
   const addScore = useCallback((points: number) => {
     const newScore = totalScore + points;
+    const oldLevel = currentLevel.level;
     setTotalScore(newScore);
     localStorage.setItem('jb_total_score', newScore.toString());
     updateLevel(newScore);
-  }, [totalScore, updateLevel]);
+    
+    // Check if leveled up
+    const newLevel = LEVELS.find(l => newScore >= l.minScore && newScore < (LEVELS[LEVELS.findIndex(x => x === l) + 1]?.minScore || Infinity));
+    if (newLevel && newLevel.level > oldLevel) {
+      return true; // Leveled up!
+    }
+    return false;
+  }, [totalScore, currentLevel, updateLevel]);
 
   const getNextLevel = useCallback(() => {
     const nextLevelIndex = LEVELS.findIndex(l => l.level === currentLevel.level + 1);
