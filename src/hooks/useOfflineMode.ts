@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FALLBACK_QUESTIONS } from '@/data/questions';
+import { toast } from '@/hooks/use-toast';
 
 export function useOfflineMode() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isDataCached, setIsDataCached] = useState(false);
   const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   // Monitora status da conexão
   useEffect(() => {
@@ -112,12 +114,48 @@ export function useOfflineMode() {
     }
   }, []);
 
+  // Sincroniza dados automaticamente quando online
+  const syncData = useCallback(async () => {
+    if (!isOffline && isServiceWorkerReady) {
+      try {
+        // Verifica se há atualizações
+        const currentQuestionsCount = FALLBACK_QUESTIONS.length;
+        const cached = await loadOfflineQuestions();
+        
+        if (!cached || cached.length !== currentQuestionsCount) {
+          await downloadForOffline();
+          setLastSyncTime(new Date());
+          
+          toast({
+            title: "📥 Dados atualizados!",
+            description: `${currentQuestionsCount} perguntas sincronizadas com sucesso.`,
+          });
+        }
+      } catch (error) {
+        console.error('Erro na sincronização automática:', error);
+      }
+    }
+  }, [isOffline, isServiceWorkerReady, downloadForOffline, loadOfflineQuestions]);
+
+  // Sincroniza automaticamente quando volta online
+  useEffect(() => {
+    if (!isOffline && isDataCached) {
+      const timer = setTimeout(() => {
+        syncData();
+      }, 2000); // Aguarda 2s após reconectar
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOffline, isDataCached, syncData]);
+
   return {
     isOffline,
     isDataCached,
     isServiceWorkerReady,
+    lastSyncTime,
     downloadForOffline,
     loadOfflineQuestions,
     clearOfflineCache,
+    syncData,
   };
 }
