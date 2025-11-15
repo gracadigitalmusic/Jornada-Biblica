@@ -274,6 +274,8 @@ const Index = () => {
             onQuit={handleQuitQuiz}
             gameMode={setupMode}
             showNextButton={showNextButton}
+            isNarrationEnabled={settings.isNarrationEnabled}
+            onNarrate={speak}
           />
         )}
 
