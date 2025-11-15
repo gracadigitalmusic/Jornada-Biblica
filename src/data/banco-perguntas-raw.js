@@ -2710,4 +2710,6 @@ var BANCO_DE_PERGUNTAS = [
     "category": "evangelhos_jesus"
   },
 
-]
+];
+
+export default BANCO_DE_PERGUNTAS;

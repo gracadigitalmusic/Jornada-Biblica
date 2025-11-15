@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { fetchBibleText as fetchBibleTextUtil, formatBibleReference } from '@/utils/bibleParser';
 
 export function useBibleReference() {
   const [isLoading, setIsLoading] = useState(false);
@@ -7,17 +8,15 @@ export function useBibleReference() {
   const fetchBibleText = async (reference: string): Promise<string> => {
     setIsLoading(true);
     try {
-      // Simula busca do texto bíblico
-      // TODO: Implementar busca real da API ou arquivo leitura.html
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Por enquanto retorna texto placeholder
-      setBibleText(`"Texto da referência ${reference} será carregado aqui."`);
-      return `"Texto da referência ${reference} será carregado aqui."`;
+      // Usa a função utilitária para buscar o texto
+      const text = await fetchBibleTextUtil(reference);
+      setBibleText(text);
+      return text;
     } catch (error) {
       console.error('Erro ao buscar texto bíblico:', error);
-      setBibleText('Erro ao carregar o texto bíblico.');
-      return 'Erro ao carregar o texto bíblico.';
+      const errorMsg = 'Erro ao carregar o texto bíblico. Tente novamente.';
+      setBibleText(errorMsg);
+      return errorMsg;
     } finally {
       setIsLoading(false);
     }
@@ -27,5 +26,11 @@ export function useBibleReference() {
     setBibleText(null);
   };
 
-  return { fetchBibleText, bibleText, isLoading, clearBibleText };
+  return { 
+    fetchBibleText, 
+    bibleText, 
+    isLoading, 
+    clearBibleText,
+    formatReference: formatBibleReference 
+  };
 }
