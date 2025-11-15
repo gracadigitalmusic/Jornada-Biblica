@@ -4,6 +4,7 @@ import { Trophy, Users, User, Zap, Target, Award, BookOpen, Flame, GraduationCap
 import { TOTAL_QUESTIONS } from "@/data/questions";
 import { PlayerLevelCard } from "./PlayerLevelCard";
 import { BadgesDisplay } from "./BadgesDisplay";
+import { OfflineMode } from "./OfflineMode";
 
 interface MenuScreenProps {
   onStartSolo: () => void;
@@ -251,6 +252,16 @@ export function MenuScreen({
           <BookMarked className="w-5 h-5" />
           Revisão
         </Button>
+      </motion.div>
+
+      {/* Offline Mode */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+        className="mt-8"
+      >
+        <OfflineMode />
       </motion.div>
 
       {/* Footer */}

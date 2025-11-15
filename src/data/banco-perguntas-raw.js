@@ -2711,5 +2711,3 @@ var BANCO_DE_PERGUNTAS = [
   },
 
 ]
-
-export default BANCO_DE_PERGUNTAS;
