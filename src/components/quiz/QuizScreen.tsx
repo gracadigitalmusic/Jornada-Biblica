@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Heart, Lightbulb, Zap } from "lucide-react";
+import { Heart, Lightbulb, Zap, Share2, Copy, Volume2 } from "lucide-react";
 import { Question, Player } from "@/types/quiz";
 import { GAME_CONSTANTS } from "@/data/questions";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { useBibleReference } from "@/hooks/useBibleReference";
+import { BibleReferenceDialog } from "./BibleReferenceDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuizScreenProps {
   question: Question;
@@ -23,6 +26,8 @@ interface QuizScreenProps {
   onQuit: () => void;
   gameMode: 'solo' | 'multiplayer';
   showNextButton: boolean;
+  isNarrationEnabled: boolean;
+  onNarrate: (text: string) => void;
 }
 
 export function QuizScreen({
@@ -41,12 +46,17 @@ export function QuizScreen({
   onQuit,
   gameMode,
   showNextButton,
+  isNarrationEnabled,
+  onNarrate,
 }: QuizScreenProps) {
   const { playCorrect, playWrong, playTimerWarning } = useGameSounds();
+  const { toast } = useToast();
+  const { fetchBibleText, bibleText, isLoading, clearBibleText } = useBibleReference();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [disabledIndices, setDisabledIndices] = useState<number[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'correct' | 'wrong' | null>(null);
+  const [showBibleDialog, setShowBibleDialog] = useState(false);
 
   const currentPlayer = players[currentPlayerIndex];
   const timePercent = (timeRemaining / GAME_CONSTANTS.TIME_PER_QUESTION) * 100;
@@ -99,6 +109,73 @@ export function QuizScreen({
     }
 
     onAnswer(index);
+
+    // Narrate explanation after answer
+    if (isNarrationEnabled && question.explanation) {
+      setTimeout(() => {
+        const narrateText = `${question.reference}. ${question.explanation}`;
+        onNarrate(narrateText);
+      }, 1000);
+    }
+  };
+
+  const handleShareResult = async () => {
+    const correctAnswer = question.options[question.answer];
+    const shareText = `📖 Jornada Bíblica\n\nPergunta: ${question.question}\n\n✅ Resposta: ${correctAnswer}\n\n📚 Referência: ${question.reference}\n\n💡 ${question.explanation}`;
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Jornada Bíblica',
+          text: shareText,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Copiado!",
+          description: "Resultado copiado para a área de transferência",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    const correctAnswer = question.options[question.answer];
+    const shareText = `📖 Jornada Bíblica\n\nPergunta: ${question.question}\n\n✅ Resposta: ${correctAnswer}\n\n📚 Referência: ${question.reference}\n\n💡 ${question.explanation}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast({
+        title: "Copiado!",
+        description: "Resultado copiado para a área de transferência",
+      });
+    } catch (error) {
+      console.error('Erro ao copiar:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar o texto",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReferenceClick = async () => {
+    setShowBibleDialog(true);
+    await fetchBibleText(question.reference);
+  };
+
+  const handleCloseDialog = () => {
+    setShowBibleDialog(false);
+    clearBibleText();
+  };
+
+  const handleNarrateExplanation = () => {
+    if (question.explanation) {
+      const narrateText = `${question.reference}. ${question.explanation}`;
+      onNarrate(narrateText);
+    }
   };
 
   return (
@@ -265,17 +342,50 @@ export function QuizScreen({
             animate={{ opacity: 1, height: 'auto' }}
             className="mt-6 space-y-3"
           >
-            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <p className="text-xs font-semibold text-primary/70 mb-1">📖 Referência Bíblica</p>
-              <p className="font-bold text-foreground">{question.reference}</p>
+            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 cursor-pointer hover:bg-primary/15 transition-colors" onClick={handleReferenceClick}>
+              <p className="text-xs font-semibold text-primary/70 mb-1">📖 Referência Bíblica (clique para ver o texto)</p>
+              <p className="font-bold text-foreground underline decoration-primary/30">{question.reference}</p>
             </div>
             
             {question.explanation && (
               <div className="p-4 bg-muted/50 rounded-lg border border-border">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">💡 Explicação</p>
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs font-semibold text-muted-foreground">💡 Explicação</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleNarrateExplanation}
+                    className="h-8 gap-2"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    Ouvir
+                  </Button>
+                </div>
                 <p className="text-sm text-foreground leading-relaxed">{question.explanation}</p>
               </div>
             )}
+
+            {/* Share Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShareResult}
+                className="flex-1 gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Compartilhar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyToClipboard}
+                className="flex-1 gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                Copiar
+              </Button>
+            </div>
           </motion.div>
         )}
       </motion.div>
@@ -303,6 +413,14 @@ export function QuizScreen({
           Voltar ao Menu Principal
         </Button>
       </div>
+
+      {/* Bible Reference Dialog */}
+      <BibleReferenceDialog
+        reference={showBibleDialog ? question.reference : null}
+        bibleText={bibleText}
+        isLoading={isLoading}
+        onClose={handleCloseDialog}
+      />
     </div>
   );
 }
