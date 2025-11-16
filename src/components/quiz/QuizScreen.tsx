@@ -9,6 +9,7 @@ import { useGameSounds } from "@/hooks/useGameSounds";
 import { useBibleReference } from "@/hooks/useBibleReference";
 import { BibleReferenceDialog } from "./BibleReferenceDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useCelebration } from "@/hooks/useCelebration";
 
 interface QuizScreenProps {
   question: Question;
@@ -52,6 +53,7 @@ export function QuizScreen({
   const { playCorrect, playWrong, playTimerWarning } = useGameSounds();
   const { toast } = useToast();
   const { fetchBibleText, bibleText, isLoading, clearBibleText } = useBibleReference();
+  const { celebrateAchievement, celebratePowerUp } = useCelebration();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [disabledIndices, setDisabledIndices] = useState<number[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -104,6 +106,12 @@ export function QuizScreen({
 
     if (correct) {
       playCorrect();
+      // Celebration effects for correct answers
+      if (combo >= 5) {
+        celebratePowerUp();
+      } else if (combo >= 3) {
+        celebrateAchievement();
+      }
     } else {
       playWrong();
     }
