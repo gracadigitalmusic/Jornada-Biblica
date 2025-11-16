@@ -12,6 +12,7 @@ interface MenuScreenProps {
   onStartMarathon: () => void;
   onStartStudy: () => void;
   onStartTournament: () => void;
+  onStartStory: () => void;
   onShowRanking: () => void;
   onShowAchievements: () => void;
   onShowPowerUpShop: () => void;
@@ -26,7 +27,8 @@ export function MenuScreen({
   onStartMultiplayer, 
   onStartMarathon, 
   onStartStudy, 
-  onStartTournament, 
+  onStartTournament,
+  onStartStory,
   onShowRanking, 
   onShowAchievements, 
   onShowPowerUpShop,
