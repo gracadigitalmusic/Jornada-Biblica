@@ -43,7 +43,7 @@ export interface RankingEntry {
   avatar: string;
 }
 
-export type GameMode = 'menu' | 'solo' | 'multiplayer' | 'marathon' | 'study' | 'tournament' | 'quiz' | 'results' | 'review';
+export type GameMode = 'menu' | 'solo' | 'multiplayer' | 'marathon' | 'study' | 'tournament' | 'quiz' | 'results' | 'review' | 'story' | 'shop';
 
 export interface PowerUp {
   id: string;
@@ -76,4 +76,38 @@ export interface TournamentEntry {
   score: number;
   questionsAnswered: number;
   date: string;
+}
+
+export interface StoryChapter {
+  id: string;
+  title: string;
+  description: string;
+  narrative: string;
+  unlocked: boolean;
+  completed: boolean;
+  requiredScore: number;
+  questions: Question[];
+  cutscene?: {
+    image?: string;
+    text: string;
+    characterName?: string;
+  };
+}
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: 'theme' | 'avatar' | 'effect' | 'powerup';
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  preview?: string;
+  owned?: boolean;
+  seasonal?: boolean;
+}
+
+export interface PlayerCurrency {
+  coins: number;
+  gems: number;
 }

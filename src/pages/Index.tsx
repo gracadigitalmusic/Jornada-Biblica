@@ -18,7 +18,12 @@ import { useCelebration } from "@/hooks/useCelebration";
 import { useReviewHistory } from "@/hooks/useReviewHistory";
 import { useGameSettings } from "@/hooks/useGameSettings";
 import { useNarration } from "@/hooks/useNarration";
+import { useStoryMode } from "@/hooks/useStoryMode";
+import { useVirtualShop } from "@/hooks/useVirtualShop";
 import { Player, GameMode } from "@/types/quiz";
+import { StoryModeScreen } from "@/components/quiz/StoryModeScreen";
+import { VirtualShop } from "@/components/quiz/VirtualShop";
+import { AICompanion } from "@/components/quiz/AICompanion";
 
 const Index = () => {
   const [gameMode, setGameMode] = useState<GameMode>("menu");
@@ -39,6 +44,8 @@ const Index = () => {
   const reviewHistory = useReviewHistory();
   const { settings, toggleNarration } = useGameSettings();
   const { speak, cancel } = useNarration();
+  const storyMode = useStoryMode();
+  const virtualShop = useVirtualShop();
 
   // Check for timeout
   useEffect(() => {
@@ -80,6 +87,20 @@ const Index = () => {
     setGameMode('review');
   };
 
+  const handleStartStory = () => {
+    setGameMode('story');
+  };
+
+  const handleShowShop = () => {
+    setShowPowerUpShop(true); // Reutilizando a mesma modal
+  };
+
+  const handleSelectChapter = (chapterId: string) => {
+    storyMode.setCurrentChapter(chapterId);
+    // Aqui você poderia iniciar o quiz com perguntas específicas do capítulo
+    setGameMode('menu'); // Por enquanto volta ao menu
+  };
+
   const handleMarathonReady = (player: Player) => {
     const firstQuestionText = quiz.initializeGame([player], 999); // Large number for marathon
     setGameMode("quiz");
@@ -114,6 +135,17 @@ const Index = () => {
     const result = selectedIndex === -1 
       ? quiz.handleTimeout() 
       : quiz.answerQuestion(selectedIndex);
+
+    const gainedPoints = result.pointsEarned;
+    const didLevelUp = playerLevel.addScore(gainedPoints);
+    
+    // Add coins for correct answers
+    if (result.correct) {
+      virtualShop.addCoins(gainedPoints);
+    }
+    
+    // Check for story chapter unlocks
+    storyMode.checkUnlocks(playerLevel.totalScore);
     
     if (!result.correct && quiz.currentQuestion) {
       reviewHistory.addIncorrectQuestion(quiz.currentQuestion.id);
@@ -222,6 +254,7 @@ const Index = () => {
             onStartMarathon={handleStartMarathon}
             onStartStudy={handleStartStudy}
             onStartTournament={handleStartTournament}
+            onStartStory={handleStartStory}
             onShowRanking={() => {
               ranking.loadRanking();
               setShowRanking(true);
@@ -310,10 +343,21 @@ const Index = () => {
         achievements={achievements.getAchievements()}
       />
 
-      <PowerUpShop
+      <PowerUpShop 
+        open={showPowerUpShop} 
+        onClose={() => setShowPowerUpShop(false)} 
+      />
+
+      <VirtualShop
         open={showPowerUpShop}
         onClose={() => setShowPowerUpShop(false)}
+        shopItems={virtualShop.shopItems}
+        currency={virtualShop.currency}
+        onPurchase={virtualShop.purchaseItem}
       />
+
+      {/* AI Companion - sempre disponível */}
+      <AICompanion />
     </div>
   );
 };
