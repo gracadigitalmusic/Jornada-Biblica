@@ -24,6 +24,7 @@ import { Player, GameMode } from "@/types/quiz";
 import { StoryModeScreen } from "@/components/quiz/StoryModeScreen";
 import { VirtualShop } from "@/components/quiz/VirtualShop";
 import { AICompanion } from "@/components/quiz/AICompanion";
+import { CoopLobby } from "@/components/quiz/CoopLobby";
 
 const Index = () => {
   const [gameMode, setGameMode] = useState<GameMode>("menu");
@@ -35,6 +36,7 @@ const Index = () => {
   const [showResults, setShowResults] = useState(false);
   const [isGameOverState, setIsGameOverState] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
+  const [showCoopLobby, setShowCoopLobby] = useState(false);
 
   const quiz = useQuizGame();
   const achievements = useAchievements();
@@ -97,8 +99,21 @@ const Index = () => {
 
   const handleSelectChapter = (chapterId: string) => {
     storyMode.setCurrentChapter(chapterId);
-    // Aqui você poderia iniciar o quiz com perguntas específicas do capítulo
-    setGameMode('menu'); // Por enquanto volta ao menu
+    // Start co-op mode for story chapters
+    setShowCoopLobby(true);
+  };
+
+  const handleStartCoop = () => {
+    setShowCoopLobby(true);
+  };
+
+  const handleCoopGameStart = () => {
+    setShowCoopLobby(false);
+    setGameMode('quiz');
+  };
+
+  const handleCancelCoop = () => {
+    setShowCoopLobby(false);
   };
 
   const handleMarathonReady = (player: Player) => {
@@ -205,14 +220,27 @@ const Index = () => {
       if (setupMode === 'solo' && quiz.currentPlayer && quiz.currentPlayer.score > 0) {
         ranking.addScore(quiz.currentPlayer);
         
-        const leveledUp = playerLevel.addScore(quiz.currentPlayer.score);
-        if (leveledUp) {
-          setTimeout(() => celebration.celebrateLevelUp(), 500);
-        }
-        
-        if (quiz.sessionWrongAnswers === 0) {
-          setTimeout(() => celebration.celebrateVictory(), 1000);
-        }
+      const leveledUp = playerLevel.addScore(quiz.currentPlayer.score);
+      if (leveledUp) {
+        setTimeout(() => celebration.celebrateLevelUp(), 500);
+      }
+      
+      // Check for story chapter completion
+      if (storyMode.currentChapter) {
+        const perfect = quiz.sessionWrongAnswers === 0;
+        const noDeath = quiz.lives === 3;
+        storyMode.completeChapter(storyMode.currentChapter);
+        achievements.logStoryChapter(
+          storyMode.currentChapter,
+          perfect,
+          noDeath,
+          () => celebration.celebrateAchievement()
+        );
+      }
+      
+      if (quiz.sessionWrongAnswers === 0) {
+        setTimeout(() => celebration.celebrateVictory(), 1000);
+      }
       }
     }
 
@@ -255,6 +283,7 @@ const Index = () => {
             onStartStudy={handleStartStudy}
             onStartTournament={handleStartTournament}
             onStartStory={handleStartStory}
+            onStartCoop={handleStartCoop}
             onShowRanking={() => {
               ranking.loadRanking();
               setShowRanking(true);
@@ -355,6 +384,13 @@ const Index = () => {
         currency={virtualShop.currency}
         onPurchase={virtualShop.purchaseItem}
       />
+      
+      {showCoopLobby && (
+        <CoopLobby
+          onStartGame={handleCoopGameStart}
+          onCancel={handleCancelCoop}
+        />
+      )}
 
       {/* AI Companion - sempre disponível */}
       <AICompanion />

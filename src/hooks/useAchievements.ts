@@ -20,6 +20,22 @@ const ACHIEVEMENT_DEFINITIONS: Record<string, { title: string; desc: string }> =
   'all_lives': { title: "Escudo da Fé", desc: "Completou uma sessão com todas as 3 vidas." },
   'perfect_session': { title: "Imbatível", desc: "Completou uma sessão sem erros." },
   'session_10': { title: "Perseverante", desc: "Jogou 10 sessões no total." },
+  
+  // Story Mode Achievements
+  'story_genesis': { title: "No Princípio", desc: "Completou o capítulo Gênesis." },
+  'story_exodus': { title: "Libertador", desc: "Completou o capítulo Êxodo." },
+  'story_prophets': { title: "Mensageiro", desc: "Completou o capítulo dos Profetas." },
+  'story_jesus': { title: "Seguidor do Messias", desc: "Completou o capítulo de Jesus." },
+  'story_apostles': { title: "Testemunha", desc: "Completou o capítulo dos Apóstolos." },
+  'story_revelation': { title: "Visionário", desc: "Completou o capítulo Apocalipse." },
+  'story_all': { title: "Cronista Sagrado", desc: "Completou todos os capítulos do Modo História." },
+  'story_no_death': { title: "Guardião da Fé", desc: "Completou um capítulo sem perder vidas." },
+  'story_perfect': { title: "Iluminado", desc: "Completou um capítulo com 100% de acertos." },
+  
+  // Co-op Achievements
+  'coop_first': { title: "Irmãos em Cristo", desc: "Jogou pela primeira vez no modo cooperativo." },
+  'coop_win_5': { title: "Time Ungido", desc: "Completou 5 capítulos em equipe." },
+  'coop_perfect': { title: "Harmonia Divina", desc: "Completou um capítulo cooperativo sem erros." },
 };
 
 export function useAchievements() {
@@ -144,11 +160,54 @@ export function useAchievements() {
     }));
   }, [data.unlocked]);
 
+  const logStoryChapter = useCallback((
+    chapterId: string,
+    perfect: boolean,
+    noDeath: boolean,
+    onCelebrate?: () => void
+  ) => {
+    const newData = { ...data };
+    
+    // Chapter-specific achievements
+    if (chapterId === 'genesis') unlock('story_genesis', onCelebrate);
+    if (chapterId === 'exodus') unlock('story_exodus', onCelebrate);
+    if (chapterId === 'prophets') unlock('story_prophets', onCelebrate);
+    if (chapterId === 'jesus') unlock('story_jesus', onCelebrate);
+    if (chapterId === 'apostles') unlock('story_apostles', onCelebrate);
+    if (chapterId === 'revelation') unlock('story_revelation', onCelebrate);
+    
+    // Performance achievements
+    if (perfect) unlock('story_perfect', onCelebrate);
+    if (noDeath) unlock('story_no_death', onCelebrate);
+    
+    save(newData);
+  }, [data, save, unlock]);
+
+  const logCoopSession = useCallback((
+    won: boolean,
+    perfect: boolean,
+    onCelebrate?: () => void
+  ) => {
+    const newData = { ...data };
+    
+    if (!data.unlocked.has('coop_first')) {
+      unlock('coop_first', onCelebrate);
+    }
+    
+    if (won && perfect) {
+      unlock('coop_perfect', onCelebrate);
+    }
+    
+    save(newData);
+  }, [data, save, unlock]);
+
   return {
     data,
     unlock,
     logAnswer,
     logSession,
+    logStoryChapter,
+    logCoopSession,
     getAchievements,
   };
 }
